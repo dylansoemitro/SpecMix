@@ -16,6 +16,7 @@ from matplotlib import pyplot as plt
 from SpecMix.specmix import SpecMix
 from SpecMix.onlycat import onlyCat
 from spectralCAT import spectralCAT
+from sklearn.preprocessing import LabelEncoder
 
 def calculate_score(df, target_labels, n_clusters = 2, method = "spectral", metrics = ["jaccard"], sigma=1, 
                     kernel = None, lambdas=[], knn=0, binary_cols = [], categorical_cols = [], numerical_cols = [],  
@@ -74,8 +75,13 @@ def calculate_score(df, target_labels, n_clusters = 2, method = "spectral", metr
     raise ValueError("Number of columns in numerical, categorical and binary columns lists should be equal to total number of columns in dataframe")
 
   # Convert columns to appropriate data types
+  le = LabelEncoder()
+
   for col in categorical_cols:
-    df[col] = df[col].astype('object')
+      df[col] = df[col].astype('object')
+      df[col] = le.fit_transform(df[col])
+      df[col] = df[col].astype('object')
+
   for col in numerical_cols:
     df[col] = df[col].astype('float')
   for col in binary_cols:
