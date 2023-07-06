@@ -3,10 +3,10 @@ from scipy.sparse import spdiags, issparse
 from scipy import sparse
 from scipy.sparse.linalg import eigsh
 from sklearn.cluster import KMeans
-from . import SpecMix
+from SpecMix.specmix import SpecMix
 
 
-class onlyCat(SpecMix.SpecMix):
+class onlyCat(SpecMix):
     '''
     Spectral clustering algorithm with only categorical features.
 
@@ -32,6 +32,7 @@ class onlyCat(SpecMix.SpecMix):
     def __init__(self, n_clusters=2, random_state=None):
         self.n_clusters = n_clusters
         self.random_state = random_state
+        
     
     def fit(self, X, y=None):
         '''
@@ -50,11 +51,11 @@ class onlyCat(SpecMix.SpecMix):
         self
         '''
         # Create adjacency matrix
-        A = self.create_adjacency_df(X, return_df=False)
+        A = self.create_adjacency_df(X)
         n = len(X)
         # Create bipartite graph
         self.B = A[0:n, n::]
-        self.labels_ = self.Tcut(self.B, self.n_clusters)
+        self.labels_ = self.Tcut(self.B)
         return self
     
     def fit_predict(self, X, y=None):
