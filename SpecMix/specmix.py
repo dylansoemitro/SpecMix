@@ -118,14 +118,15 @@ class SpecMix(BaseEstimator, ClusterMixin):
         - matrix: numpy array/dataframe with shape (num_samples, num_samples), the adjacency matrix
         """
 
-        lambdas = lambdas or []
+        if not hasattr(self, "lambdas") or not self.lambdas:
+            lambdas = [1] * len(self.categorical_cols) if hasattr(self, "categorical_cols") else [1] * len(df.columns)
         numerical_nodes_count = len(df.index)
         df = df.drop(['target'], axis=1, errors='ignore')
 
         numerical_labels = []  # keep track of numerical node labels
         categorical_labels = []  # keep track of categorical node labels
         # If columns are not specified, determine them automatically
-        if not self.numerical_cols and not self.categorical_cols:
+        if (not hasattr(self, "numerical_cols")) or (not self.numerical_cols and not self.categorical_cols): 
             # Separate numeric and categorical columns
             numeric_df = df.select_dtypes(include=np.number)
             categorical_df = df.select_dtypes(exclude=np.number)
@@ -196,12 +197,9 @@ class SpecMix(BaseEstimator, ClusterMixin):
         for i in range(numerical_nodes_count):
             for k, col in enumerate(categorical_df):
                 j = numerical_nodes_count + categorical_labels.index(f'{col}={categorical_df[col][i]}')
-                if not lambdas:
-                    matrix[i][j], matrix[j][i] = 1, 1
-                else:
-                    matrix[i][j], matrix[j][i] = lambdas[k], lambdas[k]
+                matrix[i][j], matrix[j][i] = lambdas[k], lambdas[k]
         # Create labeled DataFrame if required
-        if self.return_df:
+        if hasattr(self, "return_df") and self.return_df:
             return pd.DataFrame(matrix, index=numerical_labels + categorical_labels, columns=numerical_labels + categorical_labels)
         else:
             return matrix

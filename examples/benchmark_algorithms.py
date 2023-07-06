@@ -4,8 +4,8 @@ from kmodes.kprototypes import KPrototypes
 from kmodes.kmodes import KModes
 from stepmix.stepmix import StepMix
 from stepmix.utils import get_mixed_descriptor
-from SpecMix.spectralCAT import spectralCAT
-from SpecMix.OnlyCat import onlyCat
+from examples.spectralCAT import spectralCAT
+from SpecMix.onlycat import onlyCat
 from sklearn.cluster import KMeans
 from prince import FAMD
 import numpy as np
@@ -15,7 +15,6 @@ import gower
 from matplotlib import pyplot as plt
 from SpecMix.specmix import SpecMix
 from SpecMix.onlycat import onlyCat
-from spectralCAT import spectralCAT
 from sklearn.preprocessing import LabelEncoder
 
 def calculate_score(df, target_labels, n_clusters = 2, method = "spectral", metrics = ["jaccard"], sigma=1, 
@@ -176,7 +175,7 @@ def calculate_score(df, target_labels, n_clusters = 2, method = "spectral", metr
   elif method == "onlyCat":
     df = df.drop(['target'], axis=1, errors='ignore')
     start_time = time.time()
-    predicted_labels = onlyCat(df, n_clusters)
+    predicted_labels = onlyCat(n_clusters=n_clusters, random_state=random_state).fit_predict(df)
     end_time = time.time()
   else:
     raise ValueError("Invalid method")
