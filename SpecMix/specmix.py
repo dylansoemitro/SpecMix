@@ -90,9 +90,9 @@ class SpecMix(BaseEstimator, ClusterMixin):
         Returns:
         - self
         '''
-        self.adj_matrix_ = self.create_adjacency_df(X, self.sigma, self.kernel, self.lambdas, self.knn, self.return_df, self.numerical_cols, self.categorical_cols, self.n_clusters, self.scaling, self.sigmas)
+        self.adj_matrix_ = self.create_adjacency_df(X)
         self.spectral = SpectralClustering(n_clusters=self.n_clusters, assign_labels='kmeans',random_state=self.random_state, affinity = 'precomputed', n_init=self.n_init, verbose=self.verbose).fit(self.adj_matrix_)
-        self.labels_ = self.spectral.labels_
+        self.labels_ = self.spectral.labels_[:len(X)]
         return self
 
     def fit_predict(self, X, y=None):
@@ -118,15 +118,15 @@ class SpecMix(BaseEstimator, ClusterMixin):
         - matrix: numpy array/dataframe with shape (num_samples, num_samples), the adjacency matrix
         """
 
-        if not hasattr(self, "lambdas") or not self.lambdas:
-            lambdas = [1] * len(self.categorical_cols) if hasattr(self, "categorical_cols") else [1] * len(df.columns)
+        if not self.lambdas:
+            self.lambdas = [1] * len(self.categorical_cols)
         numerical_nodes_count = len(df.index)
         df = df.drop(['target'], axis=1, errors='ignore')
 
         numerical_labels = []  # keep track of numerical node labels
         categorical_labels = []  # keep track of categorical node labels
         # If columns are not specified, determine them automatically
-        if (not hasattr(self, "numerical_cols")) or (not self.numerical_cols and not self.categorical_cols): 
+        if not self.numerical_cols and not self.categorical_cols: 
             # Separate numeric and categorical columns
             numeric_df = df.select_dtypes(include=np.number)
             categorical_df = df.select_dtypes(exclude=np.number)
@@ -158,16 +158,16 @@ class SpecMix(BaseEstimator, ClusterMixin):
                 numeric_arr = np.array(numeric_df)
             if self.kernel:
                 if self.kernel == "median_pairwise":
-                    sigma = self.median_pairwise(numeric_arr)
+                    self.sigma = self.median_pairwise(numeric_arr)
                 elif self.kernel == "cv_sigma":
-                    sigma = self.cv_sigma(numeric_arr)
+                    self.sigma = self.cv_sigma(numeric_arr)
                 elif self.kernel == "preset":
                     pass
                 else:
                     raise ValueError("Invalid kernel value. Must be one of: median_pairwise, ascmsd, cv_distortion, cv_sigma")
             # Avoid division by zero
-            if sigma == 0:
-                sigma = 1e-10
+            if self.sigma == 0:
+                self.sigma = 1e-10
             # Compute the distance matrix using KNN graph or fully connected graph
             if self.knn:
                 A_dist = kneighbors_graph(numeric_arr, n_neighbors=self.knn, mode='distance', include_self=True)
@@ -180,14 +180,14 @@ class SpecMix(BaseEstimator, ClusterMixin):
                 A_dist = 0.5 * (A_dist + A_dist.T)
 
                 # Compute the similarities using boolean indexing
-                dist_matrix = np.exp(-(A_dist)**2 / ((2 * sigma**2)))
+                dist_matrix = np.exp(-(A_dist)**2 / ((2 * self.sigma**2)))
                 dist_matrix[~A_conn.astype(bool)] = 0.0
             else:
                 dist_matrix = cdist(numeric_arr, numeric_arr, metric='euclidean')
-                dist_matrix = np.exp(-(dist_matrix)**2 / ((2 * sigma**2)))
+                dist_matrix = np.exp(-(dist_matrix)**2 / ((2 * self.sigma**2)))
 
             # Return distance matrix if there are no categorical features
-            if lambdas and lambdas[0] == 0:
+            if self.lambdas and self.lambdas[0] == 0:
                 return dist_matrix if not self.return_df else (pd.DataFrame(dist_matrix, index=numerical_labels, columns=numerical_labels))
             
             # Add numerical distance matrix to the original one (top left corner)
@@ -197,9 +197,9 @@ class SpecMix(BaseEstimator, ClusterMixin):
         for i in range(numerical_nodes_count):
             for k, col in enumerate(categorical_df):
                 j = numerical_nodes_count + categorical_labels.index(f'{col}={categorical_df[col][i]}')
-                matrix[i][j], matrix[j][i] = lambdas[k], lambdas[k]
+                matrix[i][j], matrix[j][i] = self.lambdas[k], self.lambdas[k]
         # Create labeled DataFrame if required
-        if hasattr(self, "return_df") and self.return_df:
+        if self.return_df:
             return pd.DataFrame(matrix, index=numerical_labels + categorical_labels, columns=numerical_labels + categorical_labels)
         else:
             return matrix

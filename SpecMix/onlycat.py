@@ -3,10 +3,16 @@ from scipy.sparse import spdiags, issparse
 from scipy import sparse
 from scipy.sparse.linalg import eigsh
 from sklearn.cluster import KMeans
-from SpecMix.specmix import SpecMix
+import pandas as pd
+from sklearn.base import BaseEstimator, ClusterMixin
+#test
+from sklearn.neighbors import kneighbors_graph
+from sklearn.preprocessing import StandardScaler
+from scipy.spatial.distance import cdist
 
 
-class onlyCat(SpecMix):
+
+class onlyCat(BaseEstimator, ClusterMixin):
     '''
     Spectral clustering algorithm with only categorical features.
 
@@ -19,6 +25,9 @@ class onlyCat(SpecMix):
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for centroid initialization. Use
         an int to make the randomness deterministic.
+
+    return_df : bool, default=False
+        Whether to return a labeled DataFrame or a numpy array.
     
     Attributes
     ----------
@@ -29,10 +38,10 @@ class onlyCat(SpecMix):
         Cluster labels for each point.
     '''
 
-    def __init__(self, n_clusters=2, random_state=None):
+    def __init__(self, n_clusters=2, random_state=None, return_df=False):
         self.n_clusters = n_clusters
         self.random_state = random_state
-        
+        self.return_df = return_df
     
     def fit(self, X, y=None):
         '''
@@ -50,11 +59,11 @@ class onlyCat(SpecMix):
         -------
         self
         '''
+        # Remove all numerical features
+        
+        X = X.select_dtypes(exclude=np.number)            
         # Create adjacency matrix
-        A = self.create_adjacency_df(X)
-        n = len(X)
-        # Create bipartite graph
-        self.B = A[0:n, n::]
+        self.B = pd.get_dummies(X).to_numpy()
         self.labels_ = self.Tcut(self.B)
         return self
     
@@ -77,7 +86,8 @@ class onlyCat(SpecMix):
         '''
         self.fit(X)
         return self.labels_
-
+    
+        
     def Tcut(self, B):
         """
         Perform spectral clustering on the bipartite graph B, which only contains categorical features.
