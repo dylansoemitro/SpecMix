@@ -51,7 +51,7 @@ def real_experiments(methods, metrics, num_clusters, kernel, numerical_cols, cat
                 times_taken[f'spectral lambda={l} kernel={ker}'] = time_taken
 
     scores_df = pd.DataFrame(scores)
-    #add the average time taken for each metho
+    # add the average time taken for each method 
     times_taken_df = pd.DataFrame(times_taken, index = ['time_taken'])
     scores_df = scores_df.append(times_taken_df)
 
