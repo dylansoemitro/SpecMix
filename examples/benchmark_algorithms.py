@@ -16,6 +16,8 @@ from matplotlib import pyplot as plt
 from SpecMix.specmix import SpecMix
 from SpecMix.onlycat import onlyCat
 from sklearn.preprocessing import LabelEncoder
+import pandas as pd
+from tabulate import tabulate
 
 def calculate_score(df, target_labels, n_clusters = 2, method = "spectral", metrics = ["jaccard"], sigma=1, 
                     kernel = None, lambdas=[], knn=0, binary_cols = [], categorical_cols = [], numerical_cols = [],  
@@ -70,7 +72,7 @@ def calculate_score(df, target_labels, n_clusters = 2, method = "spectral", metr
   df = df.drop(['target'], axis=1, errors='ignore')
 
   #Check that total number of columns is equal to the sum of the number of numerical, categorical and binary columns
-  if not len(numerical_cols) + len(categorical_cols) + len(binary_cols) == df.shape[1]:
+  if numerical_cols and categorical_cols and binary_cols and not len(numerical_cols) + len(categorical_cols) + len(binary_cols) == df.shape[1]:
     raise ValueError("Number of columns in numerical, categorical and binary columns lists should be equal to total number of columns in dataframe")
 
   # Convert columns to appropriate data types
@@ -248,3 +250,90 @@ def purity_score(y_pred, y_true):
     purity = majority_sum / np.sum(cm)
     
     return purity
+
+def compare_algorithms(methods, df, target_labels, n_clusters = 2, method = "spectral", metrics = ["jaccard"], sigma=1, 
+                    kernels = [] , lambda_values=[], knn=0, binary_cols = [], categorical_cols = [], numerical_cols = [],  
+                    scaling = True, sigmas = [], random_state = 0, n_init = 10, verbose = 0):
+  """
+  Compares the scores of multiple clustering algorithms on a dataset
+  Parameters
+  ----------
+  methods : list
+      List of clustering algorithms to compare.
+  df : pandas dataframe
+      Dataframe containing the dataset
+  target_labels : list
+      List containing the true labels of the dataset
+  n_clusters : int, optional
+      Number of clusters to form. The default is 2.
+  method : string, optional
+      Clustering algorithm to use. The default is "spectral".
+  metrics : list, optional
+      List of metrics to use for calculating the score. The default is ["jaccard"].
+  sigma : float, optional
+      Sigma value for the Gaussian kernel. The default is 1.
+  kernels: list, optional
+      List of kernels to use for the Gaussian kernel. The default is [] (preset to the sigma value given).
+  lambdas : list, optional
+      List of lambda values for the Gaussian kernel, the distance between each pair of categorical variables. The default is [].
+  knn : int, optional
+      Number of nearest neighbors to
+        use for the Gaussian kernel. The default is 0.
+  binary_cols : list, optional
+      List of binary columns in the dataset. The default is [].
+  categorical_cols : list, optional
+      List of categorical columns in the dataset. The default is [].
+  numerical_cols : list, optional
+      List of numerical columns in the dataset. The default is [].
+  scaling : bool, optional
+      Whether to scale the data. The default is True.
+  sigmas : list, optional
+      List of sigma values for the Gaussian kernel. The default is [].
+  random_state : int, optional
+      Random state to use for the clustering algorithm. The default is 0.
+  n_init : int, optional
+      Number of times the k-means algorithm will be run with different centroid seeds. The default is 10.
+  verbose : int, optional
+      Verbosity mode. The default is 0.
+  Returns
+  -------
+  scores_df : pandas dataframe
+      Dataframe containing the scores for each metric for each clustering algorithm.
+  """
+
+  # Check for numerical and categorical columns, automatically detect if not specified
+  if not numerical_cols and not categorical_cols:
+    numerical_cols = list(df.select_dtypes(include=[int, float]).columns)
+    categorical_cols = list(df.select_dtypes(include=[object, bool]).columns)
+  
+  # Remove target column from categorical columns or numerical columns if present
+  if 'target' in categorical_cols:
+    categorical_cols.remove('target')
+  if 'target' in numerical_cols:
+    numerical_cols.remove('target')
+  
+  scores_dict = {method: {} for method in methods}
+  time_taken_dict = {method: {} for method in methods}
+  
+  for method in methods:
+    if method == "spectral":
+      continue
+    scores_dict[method], time_taken_dict[method] = calculate_score(df, target_labels, n_clusters, method, metrics, sigma, 
+                    kernels, lambda_values, knn, binary_cols, categorical_cols, numerical_cols,  
+                    scaling, sigmas, random_state, n_init, verbose)
+  # Calculate scores for SpecMix
+  if "spectral" in methods:
+    for ker in kernels:
+      for l in lambda_values:
+        print(f"Running SpecMix with lambda={l} and kernel={ker}")
+        scores_dict[f'spectral lambda={l} kernel={ker}'], time_taken_dict[f'spectral lambda={l} kernel={ker}'] = calculate_score(df, target_labels, n_clusters, "spectral", metrics, sigma, 
+                      ker, [l] * len(categorical_cols), knn, binary_cols, categorical_cols, numerical_cols,  
+                      scaling, sigmas, random_state, n_init, verbose)
+  scores_dict.pop("spectral")
+  time_taken_dict.pop("spectral")
+
+  scores_df = pd.DataFrame(scores_dict)
+  time_taken_df = pd.DataFrame(time_taken_dict, index = ['time_taken'])
+  scores_df = scores_df.append(time_taken_df)
+  return scores_df
+

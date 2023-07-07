@@ -118,8 +118,7 @@ class SpecMix(BaseEstimator, ClusterMixin):
         - matrix: numpy array/dataframe with shape (num_samples, num_samples), the adjacency matrix
         """
 
-        if not self.lambdas:
-            self.lambdas = [1] * len(self.categorical_cols)
+        
         numerical_nodes_count = len(df.index)
         df = df.drop(['target'], axis=1, errors='ignore')
 
@@ -133,6 +132,9 @@ class SpecMix(BaseEstimator, ClusterMixin):
         else:
             numeric_df = df[self.numerical_cols]
             categorical_df = df[self.categorical_cols]
+
+        if not self.lambdas:
+            self.lambdas = [1] * len(categorical_df.columns)
 
         # Add numerical labels to list
         for i in range(numerical_nodes_count):
@@ -161,6 +163,7 @@ class SpecMix(BaseEstimator, ClusterMixin):
                     self.sigma = self.median_pairwise(numeric_arr)
                 elif self.kernel == "cv_sigma":
                     self.sigma = self.cv_sigma(numeric_arr)
+                    print("sigma", self.sigma)
                 elif self.kernel == "preset":
                     pass
                 else:
