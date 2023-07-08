@@ -163,7 +163,6 @@ class SpecMix(BaseEstimator, ClusterMixin):
                     self.sigma = self.median_pairwise(numeric_arr)
                 elif self.kernel == "cv_sigma":
                     self.sigma = self.cv_sigma(numeric_arr)
-                    print("sigma", self.sigma)
                 elif self.kernel == "preset":
                     pass
                 else:

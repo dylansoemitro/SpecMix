@@ -5,12 +5,8 @@ from scipy.sparse.linalg import eigsh
 from sklearn.cluster import KMeans
 import pandas as pd
 from sklearn.base import BaseEstimator, ClusterMixin
-#test
-from sklearn.neighbors import kneighbors_graph
-from sklearn.preprocessing import StandardScaler
-from scipy.spatial.distance import cdist
-
-
+import warnings
+warnings.filterwarnings("ignore")
 
 class onlyCat(BaseEstimator, ClusterMixin):
     '''
@@ -134,6 +130,6 @@ class onlyCat(BaseEstimator, ClusterMixin):
         evec = evec / (np.sqrt(np.sum(evec ** 2, axis=1, keepdims=True)) + 1e-10)
 
         # k-means
-        kmeans = KMeans(n_clusters=self.n_clusters, random_state=0)
+        kmeans = KMeans(n_clusters=self.n_clusters, random_state=self.random_state)
         labels = kmeans.fit_predict(evec)
         return labels

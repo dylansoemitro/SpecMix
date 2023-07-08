@@ -10,14 +10,11 @@ from sklearn.cluster import KMeans
 from prince import FAMD
 import numpy as np
 import time
-from collections import Counter
 import gower
-from matplotlib import pyplot as plt
 from SpecMix.specmix import SpecMix
 from SpecMix.onlycat import onlyCat
 from sklearn.preprocessing import LabelEncoder
 import pandas as pd
-from tabulate import tabulate
 
 def calculate_score(df, target_labels, n_clusters = 2, method = "spectral", metrics = ["jaccard"], sigma=1, 
                     kernel = None, lambdas=[], knn=0, binary_cols = [], categorical_cols = [], numerical_cols = [],  
@@ -251,7 +248,7 @@ def purity_score(y_pred, y_true):
     
     return purity
 
-def compare_algorithms(methods, df, target_labels, n_clusters = 2, method = "spectral", metrics = ["jaccard"], sigma=1, 
+def compare_algorithms(methods, df, target_labels, n_clusters = 2, metrics = ["jaccard"], sigma=1, 
                     kernels = [] , lambda_values=[], knn=0, binary_cols = [], categorical_cols = [], numerical_cols = [],  
                     scaling = True, sigmas = [], random_state = 0, n_init = 10, verbose = 0):
   """
@@ -266,8 +263,6 @@ def compare_algorithms(methods, df, target_labels, n_clusters = 2, method = "spe
       List containing the true labels of the dataset
   n_clusters : int, optional
       Number of clusters to form. The default is 2.
-  method : string, optional
-      Clustering algorithm to use. The default is "spectral".
   metrics : list, optional
       List of metrics to use for calculating the score. The default is ["jaccard"].
   sigma : float, optional
@@ -312,12 +307,14 @@ def compare_algorithms(methods, df, target_labels, n_clusters = 2, method = "spe
   if 'target' in numerical_cols:
     numerical_cols.remove('target')
   
+
   scores_dict = {method: {} for method in methods}
   time_taken_dict = {method: {} for method in methods}
   
   for method in methods:
     if method == "spectral":
       continue
+    print(f"Running {method}")
     scores_dict[method], time_taken_dict[method] = calculate_score(df, target_labels, n_clusters, method, metrics, sigma, 
                     kernels, lambda_values, knn, binary_cols, categorical_cols, numerical_cols,  
                     scaling, sigmas, random_state, n_init, verbose)
@@ -334,6 +331,6 @@ def compare_algorithms(methods, df, target_labels, n_clusters = 2, method = "spe
 
   scores_df = pd.DataFrame(scores_dict)
   time_taken_df = pd.DataFrame(time_taken_dict, index = ['time_taken'])
-  scores_df = scores_df.append(time_taken_df)
+  scores_df = pd.concat([scores_df, time_taken_df])
   return scores_df
 

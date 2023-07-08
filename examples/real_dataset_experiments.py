@@ -3,8 +3,8 @@ from examples.benchmark_algorithms import calculate_score
 import warnings
 warnings.filterwarnings("ignore")
 
-def real_experiments(methods, metrics, num_clusters, kernel, numerical_cols, categorical_cols, 
-                     path, column_names = None, sep=',', header=None, drop = None,  
+def real_experiments(methods, metrics, num_clusters, path, kernel = [], numerical_cols=[], categorical_cols=[], 
+                     column_names = None, sep=',', header=None, drop = None,  
                      lambdas=[], knn=0, scaling = True, sigmas = [], 
                      random_state = 0, n_init = 10, verbose = 0):
     scores = {}
@@ -52,7 +52,7 @@ def real_experiments(methods, metrics, num_clusters, kernel, numerical_cols, cat
 
     scores_df = pd.DataFrame(scores)
     # add the average time taken for each method 
-    times_taken_df = pd.DataFrame(times_taken, index = ['time_taken'])
-    scores_df = scores_df.append(times_taken_df)
+    time_taken_df = pd.DataFrame(times_taken, index = ['time_taken'])
+    scores_df = pd.concat([scores_df, time_taken_df])
 
     return scores_df
