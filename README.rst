@@ -25,3 +25,8 @@ Both SpecMix and onlyCat are based off of the clustering algorithms in :code:`sc
     
 This example shows the use of SpecMix on a synthetic dataset with 2 numerical features, 2 categorical features, 3 clusters, and 0.1 noise. The algorithm is initialized with 3 clusters and then fit to the dataset. The cluster labels are then printed. For more detailed usage instructions and examples, please refer to the demo.ipynb notebook included in this repository.
 
+## Bugs and Issues
+
+If you encounter any bugs or issues, feel free to `open an issue on the GitHub repository <https://github.com/dylansoemitro/SpecMix/issues>`_. Please include a detailed description of the bug or issue, as well as any relevant code snippets or error messages.
+
+
