@@ -35,20 +35,20 @@ def real_experiments(methods, metrics, num_clusters, path, kernel = [], numerica
         num_clusters = num_clusters_detected
     
     for m in methods:
-        if m == 'spectral':
+        if m == 'specmix':
             continue
         score, time_taken = calculate_score(df, df['target'].tolist(), num_clusters, m, metrics=metrics, numerical_cols=numerical_cols, categorical_cols=categorical_cols,
                                                random_state = random_state, n_init = n_init, verbose = verbose)
         scores[m] = score
         times_taken[m] = time_taken
-    if 'spectral' in methods:
+    if 'specmix' in methods:
         for ker in kernel:
             for l in lambdas:
-                score, time_taken = calculate_score(df, df['target'].tolist(), num_clusters, 'spectral',  metrics=metrics, lambdas=[l] * len(categorical_cols),
+                score, time_taken = calculate_score(df, df['target'].tolist(), num_clusters, 'specmix',  metrics=metrics, lambdas=[l] * len(categorical_cols),
                                                         numerical_cols=numerical_cols, categorical_cols=categorical_cols, kernel=ker, scaling = scaling,
                                                         knn=knn,  sigmas = sigmas, random_state = random_state, n_init = n_init, verbose = verbose)
-                scores[f'spectral lambda={l} kernel={ker}'] = score
-                times_taken[f'spectral lambda={l} kernel={ker}'] = time_taken
+                scores[f'specmix lambda={l} kernel={ker}'] = score
+                times_taken[f'specmix lambda={l} kernel={ker}'] = time_taken
 
     scores_df = pd.DataFrame(scores)
     # add the average time taken for each method 

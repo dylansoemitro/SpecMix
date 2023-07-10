@@ -8,7 +8,7 @@ from sklearn.base import BaseEstimator, ClusterMixin
 import warnings
 warnings.filterwarnings("ignore")
 
-class onlyCat(BaseEstimator, ClusterMixin):
+class OnlyCat(BaseEstimator, ClusterMixin):
     '''
     Spectral clustering algorithm with only categorical features.
 

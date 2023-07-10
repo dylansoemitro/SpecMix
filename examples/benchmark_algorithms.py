@@ -5,18 +5,17 @@ from kmodes.kmodes import KModes
 from stepmix.stepmix import StepMix
 from stepmix.utils import get_mixed_descriptor
 from examples.spectralCAT import spectralCAT
-from SpecMix.onlycat import onlyCat
+from SpecMix.onlycat import OnlyCat
 from sklearn.cluster import KMeans
 from prince import FAMD
 import numpy as np
 import time
 import gower
 from SpecMix.specmix import SpecMix
-from SpecMix.onlycat import onlyCat
 from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 
-def calculate_score(df, target_labels, n_clusters = 2, method = "spectral", metrics = ["jaccard"], sigma=1, 
+def calculate_score(df, target_labels, n_clusters = 2, method = "specmix", metrics = ["jaccard"], sigma=1, 
                     kernel = None, lambdas=[], knn=0, binary_cols = [], categorical_cols = [], numerical_cols = [],  
                     scaling = True, sigmas = [], random_state = 0, n_init = 10, verbose = 0):
   """
@@ -30,7 +29,7 @@ def calculate_score(df, target_labels, n_clusters = 2, method = "spectral", metr
   n_clusters : int, optional
       Number of clusters to form. The default is 2.
   method : string, optional
-      Clustering algorithm to use. The default is "spectral".
+      Clustering algorithm to use. The default is "specmix".
   metrics : list, optional
       List of metrics to use for calculating the score. The default is ["jaccard"].
   sigma : float, optional
@@ -84,10 +83,10 @@ def calculate_score(df, target_labels, n_clusters = 2, method = "spectral", metr
     df[col] = df[col].astype('float')
   for col in binary_cols:
     df[col] = df[col].astype('bool')
-  if method == "spectral":
+  if method == "specmix":
     # Throw error if only categorical columns are present
     if not numerical_cols and categorical_cols:
-      raise ValueError("Only categorical columns are present. Please use onlyCat instead.")
+      raise ValueError("Only categorical columns are present. Please use OnlyCat instead.")
     specmix = SpecMix(n_clusters=n_clusters, sigma=sigma, kernel=kernel, lambdas=lambdas, knn=knn, numerical_cols=numerical_cols, categorical_cols=categorical_cols + binary_cols,
                        scaling=scaling, sigmas=sigmas, random_state=random_state, n_init=n_init, verbose=verbose)
     start_time = time.time()
@@ -171,10 +170,10 @@ def calculate_score(df, target_labels, n_clusters = 2, method = "spectral", metr
     predicted_labels = kmeans.predict(transformed)
     end_time = time.time()
 
-  elif method == "onlyCat":
+  elif method == "onlycat":
     df = df.drop(['target'], axis=1, errors='ignore')
     start_time = time.time()
-    predicted_labels = onlyCat(n_clusters=n_clusters, random_state=random_state).fit_predict(df)
+    predicted_labels = OnlyCat(n_clusters=n_clusters, random_state=random_state).fit_predict(df)
     end_time = time.time()
   else:
     raise ValueError("Invalid method")
@@ -312,22 +311,20 @@ def compare_algorithms(methods, df, target_labels, n_clusters = 2, metrics = ["j
   time_taken_dict = {method: {} for method in methods}
   
   for method in methods:
-    if method == "spectral":
+    if method == "specmix":
       continue
-    print(f"Running {method}")
     scores_dict[method], time_taken_dict[method] = calculate_score(df, target_labels, n_clusters, method, metrics, sigma, 
                     kernels, lambda_values, knn, binary_cols, categorical_cols, numerical_cols,  
                     scaling, sigmas, random_state, n_init, verbose)
   # Calculate scores for SpecMix
-  if "spectral" in methods:
+  if "specmix" in methods:
     for ker in kernels:
       for l in lambda_values:
-        print(f"Running SpecMix with lambda={l} and kernel={ker}")
-        scores_dict[f'spectral lambda={l} kernel={ker}'], time_taken_dict[f'spectral lambda={l} kernel={ker}'] = calculate_score(df, target_labels, n_clusters, "spectral", metrics, sigma, 
+        scores_dict[f'specmix lambda={l} kernel={ker}'], time_taken_dict[f'specmix lambda={l} kernel={ker}'] = calculate_score(df, target_labels, n_clusters, "specmix", metrics, sigma, 
                       ker, [l] * len(categorical_cols), knn, binary_cols, categorical_cols, numerical_cols,  
                       scaling, sigmas, random_state, n_init, verbose)
-  scores_dict.pop("spectral")
-  time_taken_dict.pop("spectral")
+  scores_dict.pop("specmix")
+  time_taken_dict.pop("specmix")
 
   scores_df = pd.DataFrame(scores_dict)
   time_taken_df = pd.DataFrame(time_taken_dict, index = ['time_taken'])
