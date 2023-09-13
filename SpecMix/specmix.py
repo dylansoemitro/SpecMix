@@ -80,7 +80,7 @@ class SpecMix(BaseEstimator, ClusterMixin):
         self.n_init = n_init
         self.verbose = verbose
         self.return_df = return_df
-    
+
     def fit(self, X, y=None):
         '''
         Performs spectral clustering on a given dataset.
@@ -163,6 +163,9 @@ class SpecMix(BaseEstimator, ClusterMixin):
                     self.sigma = self.median_pairwise(numeric_arr)
                 elif self.kernel == "cv_sigma":
                     self.sigma = self.cv_sigma(numeric_arr)
+                elif self.kernel == "auto":
+                    # Calculate the standard deviation of the distances
+                    self.sigma = self.std_weights(numeric_arr)
                 elif self.kernel == "preset":
                     pass
                 else:
@@ -248,3 +251,14 @@ class SpecMix(BaseEstimator, ClusterMixin):
 
         return best_sigma
 
+    def std_weights(self, adjacency_matrix):
+        '''
+        Computes the standard deviation of the pairwise distances between all points in a dataset, to find
+        best sigma value for the Gaussian kernel.
+        Args:
+            - adjacency_matrix: numpy array with shape (num_samples, num_samples), the adjacency matrix
+        Returns:
+        - sigma: float, the standard deviation of the pairwise distances
+        '''
+        sigma = np.std(cdist(adjacency_matrix, adjacency_matrix, metric='euclidean'))
+        return sigma
